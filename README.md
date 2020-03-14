@@ -1,12 +1,12 @@
 # pyportal_risk_dice
-Use with the board game Risk./n
+Use with the board game Risk.
 Select the number of Attack and Defend die, then Battle | Roll to see the results.
 
-Running CircuitPython 5.0.0 release on Adafruit PyPortal./n
-Uses these libraries from adafruit-circuitpython-bundle-5.x-mpy-20200307:/n
-time
-board
-random
+Running CircuitPython 5.0.0 release on Adafruit PyPortal.
+Uses these libraries from adafruit-circuitpython-bundle-5.x-mpy-20200307:
+  time
+  board
+  random
 neopixel
 displayio
 adafruit_imageload
