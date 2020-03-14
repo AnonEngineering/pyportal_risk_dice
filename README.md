@@ -24,6 +24,5 @@ adafruit_touchscreen
 adafruit_button import Button
 
 adafruit_pyportal import PyPortal
-
 adafruit_bitmap_font import bitmap_font
 adafruit_display_text.label import Label
