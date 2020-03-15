@@ -1,11 +1,16 @@
 # * ------------------------------------------------------------
 # The Diceinator
-# V. Sherry 2020
+# 
 # A Pyportal project to roll dice for the Risk board game.
+# v0.9 (Beta) 3/14/20
+# https://github.com/AnonEngineering/pyportal_risk_dice/blob/master/README.md
+#
+# Van Sherry
 # * ------------------------------------------------------------
+# ToDo: Auto set backlight?
 # * ------------------------------------------------------------
 # "THE BEERWARE LICENSE" (Revision 42):
-# Van Sherry wrote this code. As long as you retain this
+# I wrote this code. As long as you retain this
 # notice, you can do whatever you want with it. If we meet
 # someday, and you think this code is worth it, you can
 # buy me a beer in return.
@@ -13,7 +18,6 @@
 
 import time
 import board
-import busio
 import random
 import neopixel
 import displayio
@@ -24,17 +28,7 @@ from adafruit_pyportal import PyPortal
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 
-# ------------- neopixel setup ------------- #
-pixel = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=1)
-WHITE = 0xffffff
-LITE_WHT = 0x404040
-RED = 0xff0000
-LITE_RED = 0x400000
-GREEN = 0x00ff00
-BLUE = 0x0000ff
-BLACK = 0x000000
-
-# Globals
+# ------------- Globals ---------------------#
 att_wins = 0
 def_wins = 0
 att_num_die = 3
@@ -44,30 +38,22 @@ wht_dice_position = [2, 4]
 
 # ------------- Sound Effects -------------- #
 soundBeep = '/sounds/beep.wav'
-soundRoll = '/sounds/Roll_Dice.wav'
+soundRoll = '/sounds/roll_dice.wav'
 
 # ------------- Display setup -------------- #
 pyportal = PyPortal()
 display = board.DISPLAY
 display.rotation = 0    # or - display.rotation = 270
 
-# Touchscreen setup
-# Rotate 0:
+# Touchscreen setup, rotated 0 (landscape)
 screen_width = 320
 screen_height = 240
 ts = adafruit_touchscreen.Touchscreen(board.TOUCH_XL, board.TOUCH_XR,
                                       board.TOUCH_YD, board.TOUCH_YU,
-                                      samples = 10,
+                                      #samples = 10,
+                                      x_resistance=300, # Reading from my Pyportal, your mileage may vary
                                       calibration=((5200, 59000), (5800, 57000)),
                                       size=(screen_width, screen_height))
-
-# Rotate 270:
-# screen_width = 240
-# screen_height = 320
-# ts = adafruit_touchscreen.Touchscreen(board.TOUCH_YD, board.TOUCH_YU,
-#                                       board.TOUCH_XR, board.TOUCH_XL,
-#                                       calibration=((5200, 59000), (5800, 57000)),
-#                                       size=(screen_width, screen_height))
 
 # ------------- Display Groups ------------- #
 main = displayio.Group(max_size=15)        # Main display group
@@ -85,6 +71,16 @@ wht_dice_sheet, palette = adafruit_imageload.load("/images/dice_white.bmp",
                                                 bitmap=displayio.Bitmap,
                                                 palette=displayio.Palette)
 
+# ------------- neopixel setup ------------- #
+pixel = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=1)
+WHITE = 0xffffff
+LITE_WHT = 0x202020
+RED = 0xff0000
+LITE_RED = 0x400000
+GREEN = 0x00ff00
+BLUE = 0x0000ff
+BLACK = 0x000000
+
 # ------------- Setup for Images ------------- #
 # Display an image until the loop starts
 pyportal.set_background('/images/risk_board1.bmp')
@@ -92,12 +88,9 @@ bg_group = displayio.Group(max_size=1)
 main.append(bg_group)
 
 # ------------- Font stuff ------------------- #
-# Set the font and preload letters
-font16 = bitmap_font.load_font("/fonts/Helvetica-Bold-16.bdf")
-#font16 = bitmap_font.load_font("/fonts/Arial-16.bdf")
-font24 = bitmap_font.load_font("/fonts/Arial-Bold-24.bdf")
+# Set the font and preload glyphs
+font16 = bitmap_font.load_font("/fonts/Arial-16.bdf")
 font16.load_glyphs(b'abcdefghjiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890- ()')
-font24.load_glyphs(b'abcdefghjiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890- ()')
 
 # ------------- Button groups ---------------- #
 buttons = []
@@ -140,12 +133,12 @@ for b in buttons:
     main.append(b.group)
 
 # ---------- Attack select view --------------------------------------------------------#
-att_label = Label(font16, text="Choose number of attackers", color=0xFFFFFF, max_glyphs=50)
-att_label.x = 50
+att_label = Label(font16, text="Choose number of attackers", color=0xFF0000, max_glyphs=50)
+att_label.x = 30
 att_label.y = 80
 att_view.append(att_label)
 
-att_win_label = Label(font16, text="Attacker wins:% d" % att_wins, color=0xFFFFFF, max_glyphs=50)
+att_win_label = Label(font16, text="Attacker wins:% d" % att_wins, color=0xFF0000, max_glyphs=50)
 att_win_label.x = 50
 att_win_label.y = 130
 roll_view.append(att_win_label)
@@ -153,21 +146,21 @@ roll_view.append(att_win_label)
 # Make a button to change numer of attackers to 1
 button_att_die1 = Button(x=60, y=110,
                      width=40, height=60,
-                     label="DIE1", label_font=font16, label_color=0x000000,
+                     label="D1", label_font=font16, label_color=0x000000,
                      fill_color=0x10C050, outline_color=0x000000)
 att_buttons.append(button_att_die1)  # adding this button to the buttons group
 
 # Make a button to change numer of attackers to 2
 button_att_die2 = Button(x=140, y=110,
                       width=40, height=60,
-                      label="DIE2", label_font=font16, label_color=0x000000,
+                      label="D2", label_font=font16, label_color=0x000000,
                       fill_color=0x10C050, outline_color=0x000000)
 att_buttons.append(button_att_die2)  # adding this button to the buttons group
 
 # Make a button to change numer of attackers to 3
 button_att_die3 = Button(x=220, y=110,
                       width=40, height=60,
-                      label="DIE3", label_font=font16, label_color=0x000000,
+                      label="D3", label_font=font16, label_color=0x000000,
                       fill_color=0x10C050, outline_color=0x000000)
 att_buttons.append(button_att_die3)  # adding this button to the buttons group
 
@@ -195,7 +188,7 @@ att_view.append(att_red_dice)
 
 # ---------- Def select view -----------------------------------------------------------#
 def_label = Label(font16, text="Choose number of defenders", color=0xFFFFFF, max_glyphs=50)
-def_label.x = 50
+def_label.x = 20
 def_label.y = 80
 def_view.append(def_label)
 
@@ -207,14 +200,14 @@ roll_view.append(def_win_label)
 # Make a button to change number of defenders to 1
 button_def_die1 = Button(x=100, y=110,
                       width=40, height=60,
-                      label="DIE1", label_font=font16, label_color=0x000000,
+                      label="D1", label_font=font16, label_color=0x000000,
                       fill_color=0x10C050, outline_color=0x000000)
 def_buttons.append(button_def_die1)  # adding this button to the buttons group
 
 # Make a button to change number of defenders to 2
 button_def_die2 = Button(x=180, y=110,
                       width=40, height=60,
-                      label="DIE2", label_font=font16, label_color=0x000000,
+                      label="D2", label_font=font16, label_color=0x000000,
                       fill_color=0x10C050, outline_color=0x000000)
 def_buttons.append(button_def_die2)  # adding this button to the buttons group
 
@@ -327,11 +320,22 @@ def roll_dice(att_num_die, def_num_die):
     def_tup = []
     att_label = ''
     def_label = ''
-
-    def_win_label.text = ("Defender wins: -")
-    att_win_label.text = ("Attacker wins: -")
-    pyportal.play_file(soundRoll)
-
+    def_win_label.text = ("Defender wins: ")
+    att_win_label.text = ("Attacker wins: ")
+    #def_win_label.text = ('')
+    #att_win_label.text = ('') 
+    
+    pyportal.play_file(soundRoll, False)
+    # While the wave is playing, show random dice values
+    t = time.monotonic()
+    while time.monotonic() - t < 2.3:   # 2.3 second wave file
+        for num in range(att_num_die):
+            red_dice[red_dice_position[num], 0] = random.randint(1, 6)
+        for num in range(def_num_die):
+            wht_dice[wht_dice_position[num], 0] = random.randint(1, 6)    
+        time.sleep(.2875) 
+   
+    # Then roll dice and add to the tuples...
     for num in range(att_num_die):
         rand_num = random.randint(1, 6)
         red_dice[red_dice_position[num], 0] = rand_num
@@ -349,41 +353,41 @@ def roll_dice(att_num_die, def_num_die):
         def_tup += (defend_tuple)
 
     def_sort_tup = Sort_Tuple(def_tup)
+    #print(def_sort_tup)
     def_hiDice = def_sort_tup[0]
 
+    # Determine Hi pair winner
     if (def_hiDice[0] >= att_hiDice[0]):
         def_wins += 1
-        #def_win_label.text = "Defender wins: " + str(def_wins)
         def_label = "Defender wins: " + str(def_wins)
         blink_color = WHITE
 
     if (att_hiDice[0] > def_hiDice[0]):
         att_wins += 1
-        #att_win_label.text = "Attacker wins: " + str(att_wins)
         att_label = "Attacker wins: " + str(att_wins)
         blink_color = RED
 
-    time.sleep(1)
+    # Show the roll result for a bit, then blink Hi pair, update winner lables
+    time.sleep(2)
     blinkDie(att_hiDice[0], def_hiDice[0], att_hiDice[1], def_hiDice[1], blink_color)
     def_win_label.text = def_label
     att_win_label.text = att_label
 
+    # If there is a Lo pair determine winner
     if att_num_die > 1 and def_num_die > 1:
         att_loDice = att_sort_tup[1]
         def_loDice = def_sort_tup[1]
         if (def_loDice[0] >= att_loDice[0]):
             def_wins += 1
-            #def_win_label.text = "Defender wins: " + str(def_wins)
             def_label = "Defender wins: " + str(def_wins)
             blink_color = WHITE
 
         if (att_loDice[0] > def_loDice[0]):
             att_wins += 1
-            #att_win_label.text = "Attacker wins: " + str(att_wins)
             att_label = "Attacker wins: " + str(att_wins)
             blink_color = RED
 
-        time.sleep(1)
+        # Blink Lo pair, update winner lables
         blinkDie(att_loDice[0], def_loDice[0], att_loDice[1], def_loDice[1], blink_color)
         def_win_label.text = def_label
         att_win_label.text = att_label
@@ -454,9 +458,12 @@ def switch_view(what_view):
         print()
     #else:
     elif what_view == 3:
-        def_win_label.text = ("Defender wins: -")
-        att_win_label.text = ("Attacker wins: -")
         pixel.fill(BLUE)
+        # Clear old values if switching back to Battle
+        def_win_label.text = ("Defender wins: ")
+        att_win_label.text = ("Attacker wins: ")
+        #def_win_label.text = ('')
+        #att_win_label.text = ('')
         hideLayer(att_view)
         hideLayer(def_view)
         button_att_view.selected = True
@@ -474,7 +481,7 @@ def switch_view(what_view):
 # Set the background
 set_image(bg_group, "/images/bg_green.bmp")
 # Set the Backlight
-set_backlight(0.75)
+set_backlight(1)    # Or vary with ambient...
 # Init the view_live variable
 view_live = 1
 # Set neopixel to lite red
@@ -494,37 +501,31 @@ board.DISPLAY.show(main)
 
 # ------------- Code Loop ------------- #
 while True:
-
     touch = ts.touch_point
-    #while ts.touch_point:  # for debounce
-        #time.sleep(.5)
-        #pass
+    time.sleep(.05)     # Seems to help debounce touchscreen
 
     # ------------- Handle Button Press Detection  ------------- #
     if touch:  # Only do this if the screen is touched
-        print("Touch" + str(touch))
-        #time.sleep(.5)
         # loop with buttons using enumerate() to number each button group as i
         for i, b in enumerate(buttons):
             if b.contains(touch):  # Test each button to see if it was pressed
                 print('Main button% d pressed' % i)
+                print("Touch" + str(touch))
+                
                 if i == 0 and view_live != 1:  # only if att_view is visible
                     pyportal.play_file(soundBeep)
                     switch_view(1)
                     while ts.touch_point:  # for debounce
-                        time.sleep(.1)
                         pass
                 if i == 1 and view_live != 2:  # only if def_view is visible
                     pyportal.play_file(soundBeep)
                     switch_view(2)
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                 if i == 2 and view_live != 3:  # only if roll_view is visible
                     pyportal.play_file(soundBeep)
                     switch_view(3)
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     if att_num_die == 1:
                         red_dice[1,0] = 1
@@ -548,30 +549,23 @@ while True:
 
         for j, att in enumerate(att_buttons):
             if att.contains(touch):  # Test each button to see if it was pressed
-                #switch_view(1)
                 print('Att select% d pressed' % j)
                 if j == 0 and view_live == 1:  # only if att_view is visible:
-                    #att.selected = True
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     att_red_dice[1, 0] = 1
                     att_red_dice[3, 0] = 0
                     att_red_dice[5, 0] = 0
                     att_num_die = 1
                 if j == 1 and view_live == 1:  # only if att_view is visible:
-                    #att.selected = True
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     att_red_dice[1, 0] = 0
                     att_red_dice[3, 0] = 2
                     att_red_dice[5, 0] = 0
                     att_num_die = 2
                 if j == 2 and view_live == 1:  # only if att_view is visible:
-                    #att.selected = True
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     att_red_dice[1, 0] = 0
                     att_red_dice[3, 0] = 0
@@ -583,14 +577,12 @@ while True:
                 print('Def select% d pressed' % k)
                 if k == 0 and view_live == 2:  # only if def_view is visible:
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     def_wht_dice[2, 0] = 1
                     def_wht_dice[4, 0] = 0
                     def_num_die = 1
                 if k == 1 and view_live == 2:  # only if def_view is visible:
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     def_wht_dice[2, 0] = 0
                     def_wht_dice[4, 0] = 2
@@ -601,7 +593,6 @@ while True:
                 print("Roll button pressed")
                 if m == 0 and view_live == 3:  # only if roll_view is visible:
                     while ts.touch_point:
-                        time.sleep(.1)
                         pass
                     print('Number of attackers% d' % att_num_die)
                     print('Number of defenders% d' % def_num_die)
@@ -610,6 +601,3 @@ while True:
                     def_wins = 0
                     att_tup = []
                     def_tup = []
-
-        #touch = (0, 0, 0)
-        #time.sleep(0.5)
